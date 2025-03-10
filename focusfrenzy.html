@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Focus Frenzy</title>
+    <style>
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #1a1a1a;
+            --primary-color: #007aff;
+            --container-bg: rgba(255, 255, 255, 0.95);
+            --button-bg: #f0f0f0;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #121212;
+            --text-color: #ffffff;
+            --primary-color: #0a84ff;
+            --container-bg: rgba(18, 18, 18, 0.95);
+            --button-bg: #2a2a2a;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: var(--bg-color);
+            color: var(--text-color);
+            transition: background 0.3s, color 0.3s;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .container {
+            background: var(--container-bg);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+            position: relative;
+            backdrop-filter: blur(8px);
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin: 0 0 1.5rem;
+            font-size: 2rem;
+            font-weight: 600;
+        }
+
+        .description {
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            line-height: 1.5;
+            color: var(--text-color);
+        }
+
+        .btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: transform 0.2s, opacity 0.2s;
+            margin: 1rem 0;
+            font-size: 1.1rem;
+            backdrop-filter: blur(4px);
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            margin: 2rem 0;
+        }
+
+        .action-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 15px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s;
+            backdrop-filter: blur(4px);
+        }
+
+        #doneBtn { background: #34c759; }
+        #skipBtn { background: #ff3b30; }
+
+        .hidden { display: none; }
+
+        .stats {
+            font-size: 1.1rem;
+            margin: 1.5rem 0;
+            display: none;
+            gap: 1.5rem;
+            justify-content: center;
+        }
+
+        #winMessage, #lossMessage {
+            font-size: 1.3rem;
+            margin: 2rem 0;
+            padding: 1.5rem;
+            border-radius: 12px;
+            backdrop-filter: blur(4px);
+        }
+
+        #winMessage { background: #34c75933; color: #34c759; }
+        #lossMessage { background: #ff3b3033; color: #ff3b30; }
+
+        .icon {
+            width: 24px;
+            height: 24px;
+            pointer-events: none;
+            -webkit-user-drag: none;
+            filter: invert(0);
+        }
+
+        [data-theme="dark"] .icon:not(.always-invert) {
+            filter: invert(1);
+        }
+
+        .action-btn .icon {
+            filter: invert(1) !important;
+        }
+
+        .settings-btn {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            background: var(--button-bg);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s;
+            backdrop-filter: blur(4px);
+            z-index: 2;
+        }
+
+        .settings-menu {
+            position: absolute;
+            top: 4rem;
+            right: 1.5rem;
+            background: var(--container-bg);
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            display: none;
+            backdrop-filter: blur(16px) saturate(180%);
+            min-width: 200px;
+            z-index: 3;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .theme-switch {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .3s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--primary-color);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button class="settings-btn" id="settingsBtn">⚙️</button>
+        <div class="settings-menu" id="settingsMenu">
+            <div class="theme-switch">
+                <span>Dark Mode</span>
+                <label class="switch">
+                    <input type="checkbox" id="themeToggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <h1>Focus Frenzy</h1>
+        <div class="description" id="gameDescription">
+            Complete 5 randomized study challenges to win!<br>
+            You have 3 lives available - use them wisely!<br>
+            Challenges automatically include time requirements.
+        </div>
+
+        <button class="btn" id="startBtn">Begin Challenge</button>
+
+        <div id="gameInterface" class="hidden">
+            <div class="stats" id="stats">
+                <span id="lives"><img src="https://i.imgur.com/VKmxqMm.png" class="icon"> 3</span>
+                <span id="completions"><img src="https://i.imgur.com/yehxYDd.png" class="icon"> 0</span>
+            </div>
+
+            <div class="challenge-card">
+                <h2 id="challengeTitle"></h2>
+                <p id="challengeDescription"></p>
+            </div>
+
+            <div class="action-btns">
+                <button class="action-btn" id="doneBtn"><img src="https://i.imgur.com/yehxYDd.png" class="icon"></button>
+                <button class="action-btn" id="skipBtn"><img src="https://i.imgur.com/Rg4gFnX.png" class="icon"></button>
+            </div>
+        </div>
+
+        <div id="winMessage" class="hidden">🎉 Success! Take a 10-minute break!</div>
+        <div id="lossMessage" class="hidden">⚠️ Out of lives! Try again!</div>
+    </div>
+
+<script>
+// Theme Management
+function setTheme(isDark) {
+    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    document.getElementById('themeToggle').checked = isDark;
+}
+
+// Initialize theme
+const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+setTheme(savedTheme === 'dark');
+
+document.getElementById('themeToggle').addEventListener('change', (e) => {
+    setTheme(e.target.checked);
+});
+
+// Settings Menu
+document.getElementById('settingsBtn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    const menu = document.getElementById('settingsMenu');
+    menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+});
+
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.settings-menu') && !e.target.closest('#settingsBtn')) {
+        document.getElementById('settingsMenu').style.display = 'none';
+    }
+});
+
+// Game Logic
+const challenges = [
+    { title: "Ninja Focus", desc: "Study completely silent for 15 minutes" },
+    { title: "Pirate Mode", desc: "Read everything in pirate accent for 10 minutes" },
+    { title: "Backwards Brain", desc: "Write notes mirrored for 12 minutes" },
+    { title: "Robot Voice", desc: "Use monotone voice for 15 minutes" },
+    { title: "Balancing Act", desc: "Stand on one leg while studying for 10 minutes" },
+    { title: "Whisper Zone", desc: "Whisper everything you read for 20 minutes" },
+    { title: "Speed Round", desc: "Race against a 7-minute timer" },
+    { title: "Memory Master", desc: "Study then recite from memory after 10 minutes" },
+    { title: "Distraction Drill", desc: "Study with loud music for 15 minutes" },
+    { title: "Shadow Puppets", desc: "Explain concepts with hand shadows for 10 minutes" },
+    { title: "Mime Mode", desc: "Study without making any sound for 15 minutes" },
+    { title: "Slow Motion", desc: "Read everything at half speed for 12 minutes" },
+    { title: "Alien Translator", desc: "Explain concepts in fake language for 10 minutes" },
+    { title: "Reverse Psychology", desc: "Study upside down for 15 minutes" },
+    { title: "Tongue Twister", desc: "Read notes while repeating tongue twisters for 10 minutes" },
+    { title: "Invisible Ink", desc: "Write notes in air with finger for 15 minutes" },
+    { title: "Dance Breaks", desc: "Study for 5 minutes, dance for 1 minute - repeat 3x" },
+    { title: "Shakespeare Style", desc: "Read in dramatic old English for 12 minutes" },
+    { title: "Spy Mission", desc: "Study while 'hiding' from imaginary agents for 15 minutes" },
+    { title: "Time Traveler", desc: "Explain concepts to imaginary past self for 10 minutes" },
+    { title: "Animal Expert", desc: "Study using animal noises for reactions for 12 minutes" },
+    { title: "Superhero Pose", desc: "Study in powerful superhero stance for 10 minutes" },
+    { title: "Underwater Mode", desc: "Hold breath while reading (surface to breathe) for 15 minutes" },
+    { title: "Magic Spells", desc: "Turn concepts into magical incantations for 12 minutes" },
+    { title: "Mystery Box", desc: "Study with one eye closed for 10 minutes" },
+    { title: "Jedi Training", desc: "Use the force to move objects while studying for 15 minutes" },
+    { title: "Zombie Mode", desc: "Read in slow zombie voice for 10 minutes" },
+    { title: "Ninja Writing", desc: "Take notes with non-dominant hand for 15 minutes" },
+    { title: "Invisible Chair", desc: "Study while pretending to sit on invisible chair for 10 minutes" },
+    { title: "Reverse Day", desc: "Do everything opposite-handed for 20 minutes" },
+    { title: "Museum Mode", desc: "Study without moving any muscles for 5 minutes" },
+    { title: "Secret Agent", desc: "Hide notes and 'decode' them for 15 minutes" },
+    { title: "Storyteller", desc: "Turn concepts into bedtime story for 12 minutes" },
+    { title: "Mirror Talk", desc: "Explain concepts to mirror reflection for 10 minutes" },
+    { title: "Blindfold Challenge", desc: "Recite notes from memory blindfolded for 7 minutes" },
+    { title: "Slow TV", desc: "Study while watching paint dry video for 15 minutes" },
+    { title: "Typewriter", desc: "Vocalize keyboard sounds while writing for 10 minutes" },
+    { title: "Air Guitar", desc: "Rock out between paragraphs for 12 minutes" },
+    { title: "Fortune Teller", desc: "Predict future uses of concepts for 10 minutes" },
+    { title: "News Anchor", desc: "Present material as news broadcast for 15 minutes" },
+    { title: "Poetry Slam", desc: "Convert notes into rhyming verses for 12 minutes" },
+    { title: "Detective Mode", desc: "Solve mysteries in your notes for 15 minutes" },
+    { title: "Gravity Flip", desc: "Lie on floor while studying for 10 minutes" },
+    { title: "Costume Party", desc: "Wear weird hat while studying for 15 minutes" },
+    { title: "Silent Disco", desc: "Mouth words without sound for 12 minutes" },
+    { title: "Movie Trailer", desc: "Narrate notes like movie preview for 10 minutes" },
+    { title: "Reverse Aging", desc: "Explain concepts to baby self for 12 minutes" },
+    { title: "Alien Invasion", desc: "Defend knowledge to imaginary aliens for 15 minutes" },
+    { title: "Time Capsule", desc: "Prepare notes for future humans for 10 minutes" },
+    { title: "Secret Code", desc: "Write notes in cipher for 20 minutes" },
+    { title: "Olympic Sport", desc: "Turn concepts into athletic events for 12 minutes" },
+    { title: "Ghost Writer", desc: "Write notes without looking at paper for 10 minutes" },
+    { title: "Super Slow Mo", desc: "Read at 1 word per second for 7 minutes" },
+    { title: "Dinosaur ROAR", desc: "Roar after each paragraph for 10 minutes" }
+];
+
+let gameState = {
+    active: false,
+    lives: 3,
+    completions: 0,
+    currentChallenge: null
+};
+
+const elements = {
+    startBtn: document.getElementById('startBtn'),
+    gameInterface: document.getElementById('gameInterface'),
+    stats: document.getElementById('stats'),
+    challengeTitle: document.getElementById('challengeTitle'),
+    challengeDescription: document.getElementById('challengeDescription'),
+    doneBtn: document.getElementById('doneBtn'),
+    skipBtn: document.getElementById('skipBtn'),
+    lives: document.getElementById('lives'),
+    completions: document.getElementById('completions'),
+    winMessage: document.getElementById('winMessage'),
+    lossMessage: document.getElementById('lossMessage'),
+    gameDescription: document.getElementById('gameDescription')
+};
+
+function newChallenge() {
+    let challenge;
+    do {
+        challenge = challenges[Math.floor(Math.random() * challenges.length)];
+    } while(challenge === gameState.currentChallenge);
+    
+    gameState.currentChallenge = challenge;
+    elements.challengeTitle.textContent = challenge.title;
+    elements.challengeDescription.textContent = challenge.desc;
+}
+
+function updateStats() {
+    elements.lives.innerHTML = `<img src="https://i.imgur.com/VKmxqMm.png" class="icon"> ${gameState.lives}`;
+    elements.completions.innerHTML = `<img src="https://i.imgur.com/yehxYDd.png" class="icon"> ${gameState.completions}`;
+}
+
+elements.startBtn.addEventListener('click', () => {
+    gameState.active = true;
+    gameState.lives = 3;
+    gameState.completions = 0;
+    
+    elements.startBtn.classList.add('hidden');
+    elements.gameDescription.classList.add('hidden');
+    elements.gameInterface.classList.remove('hidden');
+    elements.stats.style.display = 'flex';
+    elements.winMessage.classList.add('hidden');
+    elements.lossMessage.classList.add('hidden');
+    
+    newChallenge();
+    updateStats();
+});
+
+elements.doneBtn.addEventListener('click', () => {
+    if(!gameState.active) return;
+    
+    gameState.completions++;
+    updateStats();
+    
+    if(gameState.completions >= 5) {
+        elements.winMessage.classList.remove('hidden');
+        endGame();
+        return;
+    }
+    
+    newChallenge();
+});
+
+elements.skipBtn.addEventListener('click', () => {
+    if(!gameState.active) return;
+    
+    gameState.lives--;
+    updateStats();
+    
+    if(gameState.lives <= 0) {
+        elements.lossMessage.classList.remove('hidden');
+        endGame();
+        return;
+    }
+    
+    newChallenge();
+});
+
+function endGame() {
+    gameState.active = false;
+    elements.gameInterface.classList.add('hidden');
+    elements.stats.style.display = 'none';
+    elements.startBtn.classList.remove('hidden');
+    elements.startBtn.textContent = "Restart Challenge";
+    elements.gameDescription.classList.remove('hidden');
+}
+</script>
+</body>
+</html>
